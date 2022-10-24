@@ -20,10 +20,14 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
+
+    //   //////////////////////////////////////////////////////////////////////////////////////
     const userCollection = client.db("FeriBD").collection("users");
     const bannerCollection = client.db("FeriBD").collection("banners");
+    const productCollection = client.db("FeriBD").collection("products");
 
-    //   ? User data
+    //   ? User data api
+
     app.get("/getAllUsers", async (req, res) => {
       const result = await (await userCollection.find().toArray()).reverse();
       res.send(result);
@@ -81,7 +85,7 @@ async function run() {
       res.send(result);
     });
 
-    //   ? Banner data
+    //   ? Banner data api
 
     app.get("/getAllBanners", async (req, res) => {
       const result = await (await bannerCollection.find().toArray()).reverse();
@@ -122,6 +126,51 @@ async function run() {
       const result = await bannerCollection.deleteOne(filter);
       res.send(result);
     });
+
+    //   ? Product data api
+
+    app.get("/getAllProducts", async (req, res) => {
+      const result = await productCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/getSingleProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await productCollection.findOne(filter);
+      res.send(result);
+    });
+
+    app.post("/addProduct", async (req, res) => {
+      const data = req.body;
+      const result = await productCollection.insertOne(data);
+      res.send(result);
+    });
+
+    app.put("/updateData/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const data = req.body;
+      const option = { upsert: true };
+      const updateDoc = {
+        $set: data,
+      };
+      const result = await productCollection.updateOne(
+        filter,
+        updateDoc,
+        option
+      );
+      res.send(result);
+    });
+
+    app.delete("/deleteProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await productCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    // //////////////////////////////////////////////////////////////////////////////
   } finally {
     // await client.close();
   }
