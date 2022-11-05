@@ -25,8 +25,10 @@ async function run() {
     const userCollection = client.db("FeriBD").collection("users");
     const bannerCollection = client.db("FeriBD").collection("banners");
     const productCollection = client.db("FeriBD").collection("products");
+    const orderCollection = client.db("FeriBD").collection("order");
 
     //   ? User data api
+
 
     app.get("/getAllUsers", async (req, res) => {
       const result = await (await userCollection.find().toArray()).reverse();
@@ -163,10 +165,75 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/updateProductStoke/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const find = await orderCollection.findOne(filter);
+      const productID = { _id: ObjectId(find.productId) };
+      const query = await productCollection.findOne(productID);
+      const stoke = query.stoke - find.quantity;
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          stoke: stoke,
+        },
+      };
+      const result = await productCollection.updateOne(
+        productID,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+
     app.delete("/deleteProduct/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await productCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    // ? Order data api
+
+    app.get("/getAllOrder", async (req, res) => {
+      const result = await (await orderCollection.find().toArray()).reverse();
+      res.send(result);
+    });
+
+    app.get("/getAllOrder/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await (
+        await orderCollection.find(filter).toArray()
+      ).reverse();
+      res.send(result);
+    });
+
+    app.post("/addOrder", async (req, res) => {
+      const data = req.body;
+      const result = await orderCollection.insertOne(data);
+      res.send(result);
+    });
+
+    app.put("/updateOrder/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      const updateDoc = {
+        $set: {
+          confirm: "Confirm",
+        },
+      };
+      const result = await orderCollection.updateOne(filter, updateDoc, option);
+      res.send(result);
+    });
+
+    app.delete("/deleteOrder/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = {
+        _id: ObjectId(id),
+      };
+      const result = await orderCollection.deleteOne(filter);
       res.send(result);
     });
 
